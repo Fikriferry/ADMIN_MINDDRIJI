@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Monitoring — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Monitoring Sistem{% endblock %}
+{% block page_subtitle %}Pantau performa & kesehatan platform secara real-time{% endblock %}
+
+{% block content %}
+
+<!-- ── STATUS BANNER ── -->
+<div class="status-banner status-banner--ok mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <div class="status-pulse"></div>
+    <div>
+      <p class="fw-600" style="color:#fff;margin:0;font-size:.95rem">Semua Sistem Berjalan Normal</p>
+      <p style="color:rgba(255,255,255,.6);font-size:.75rem;margin:0">Terakhir diperbarui: hari ini, 14:32 WIB</p>
+    </div>
+  </div>
+  <span class="uptime-badge">Uptime 99.9%</span>
+</div>
+
+<!-- ── METRIC CARDS ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="metric-label">CPU Usage</span>
+        <span class="metric-val metric-ok">34%</span>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar"><div class="metric-fill metric-fill--ok" style="width:34%"></div></div>
+      </div>
+      <p class="metric-sub"><i class="bi bi-cpu"></i> 4 core aktif</p>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="metric-label">Memory RAM</span>
+        <span class="metric-val metric-warn">78%</span>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar"><div class="metric-fill metric-fill--warn" style="width:78%"></div></div>
+      </div>
+      <p class="metric-sub"><i class="bi bi-memory"></i> 6.2 GB / 8 GB</p>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="metric-label">Storage</span>
+        <span class="metric-val metric-ok">52%</span>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar"><div class="metric-fill metric-fill--ok" style="width:52%"></div></div>
+      </div>
+      <p class="metric-sub"><i class="bi bi-hdd"></i> 260 GB / 500 GB</p>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <span class="metric-label">Network I/O</span>
+        <span class="metric-val metric-ok">Normal</span>
+      </div>
+      <div class="metric-bar-wrap">
+        <div class="metric-bar"><div class="metric-fill metric-fill--cyan" style="width:45%"></div></div>
+      </div>
+      <p class="metric-sub"><i class="bi bi-wifi"></i> 120 Mbps avg</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOTTOM ROW ── -->
+<div class="row g-4">
+
+  <!-- Service Status -->
+  <div class="col-12 col-lg-5">
+    <div class="content-card h-100">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Status Layanan</h5>
+          <p class="content-card__sub">Komponen inti platform</p>
+        </div>
+        <button class="icon-btn"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+      <div class="service-list">
+        {% set services = [
+          ('API Server',         'Operational', 'blue',   '12ms latency'),
+          ('AI Engine',          'Operational', 'cyan',   'Model v2.4 aktif'),
+          ('Database',           'Operational', 'green',  'PostgreSQL 15'),
+          ('Auth Service',       'Operational', 'green',  'JWT aktif'),
+          ('Storage CDN',        'Degraded',    'orange', 'Latensi tinggi'),
+          ('Email Notification', 'Operational', 'green',  '98% delivery rate'),
+        ] %}
+        {% for name, status, color, note in services %}
+        <div class="service-row">
+          <div class="service-indicator indicator-{{ color }}"></div>
+          <div class="service-info">
+            <p class="service-name">{{ name }}</p>
+            <p class="service-note">{{ note }}</p>
+          </div>
+          <span class="service-status status-{{ color }}">{{ status }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Log -->
+  <div class="col-12 col-lg-7">
+    <div class="content-card h-100">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Log Request Terkini</h5>
+          <p class="content-card__sub">50 request terakhir</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="chip-btn chip-btn--active">Live</button>
+          <button class="chip-btn">Error</button>
+        </div>
+      </div>
+      <div class="log-table-wrap">
+        <table class="data-table data-table--sm">
+          <thead>
+            <tr>
+              <th>Waktu</th>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Status</th>
+              <th>Durasi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set logs = [
+              ('14:32:01','GET',   '/api/users',           200, '12ms'),
+              ('14:31:58','POST',  '/api/insight/generate',200, '345ms'),
+              ('14:31:45','GET',   '/api/articles',        200, '8ms'),
+              ('14:31:30','PUT',   '/api/users/7',         200, '22ms'),
+              ('14:31:10','GET',   '/api/notifications',   200, '9ms'),
+              ('14:30:55','POST',  '/api/auth/login',      401, '5ms'),
+              ('14:30:40','DELETE','/api/articles/3',      403, '4ms'),
+              ('14:30:20','GET',   '/api/monitoring',      200, '7ms'),
+              ('14:30:05','POST',  '/api/insight/generate',200, '312ms'),
+              ('14:29:50','GET',   '/api/users',           200, '11ms'),
+            ] %}
+            {% for time, method, path, code, dur in logs %}
+            <tr>
+              <td class="log-time">{{ time }}</td>
+              <td><span class="method-badge method-{{ method|lower }}">{{ method }}</span></td>
+              <td class="log-path">{{ path }}</td>
+              <td><span class="http-code
+                {% if code == 200 %}code-ok
+                {% elif code == 401 or code == 403 %}code-warn
+                {% else %}code-err{% endif %}">{{ code }}</span></td>
+              <td class="text-muted" style="font-size:.78rem">{{ dur }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Artikel — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Manajemen Artikel{% endblock %}
+{% block page_subtitle %}Kelola konten & publikasi artikel platform{% endblock %}
+
+{% block content %}
+
+<!-- ── STATS ROW ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)"><i class="bi bi-file-earmark-text-fill"></i></div>
+      <div><p class="mini-stat-label">Total Artikel</p><h4 class="mini-stat-val">64</h4></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(16,185,129,.1);color:#059669"><i class="bi bi-send-check-fill"></i></div>
+      <div><p class="mini-stat-label">Dipublikasi</p><h4 class="mini-stat-val">48</h4></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-file-earmark-ruled"></i></div>
+      <div><p class="mini-stat-label">Draft</p><h4 class="mini-stat-val">11</h4></div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(14,165,233,.1);color:var(--cyan)"><i class="bi bi-eye-fill"></i></div>
+      <div><p class="mini-stat-label">Total Views</p><h4 class="mini-stat-val">24.8K</h4></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN CARD ── -->
+<div class="content-card">
+  <div class="content-card__head">
+    <div>
+      <h5 class="content-card__title">Daftar Artikel</h5>
+      <p class="content-card__sub">{{ artikel|length }} artikel ditampilkan</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchArtikel" placeholder="Cari artikel..." />
+      </div>
+      <button class="btn-primary-sm">
+        <i class="bi bi-plus-lg"></i> Tulis Artikel
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="chip-btn chip-btn--active" onclick="filterArtikel(this,'semua')">Semua</button>
+    <button class="chip-btn" onclick="filterArtikel(this,'Publikasi')">Dipublikasi</button>
+    <button class="chip-btn" onclick="filterArtikel(this,'Draft')">Draft</button>
+    <button class="chip-btn" onclick="filterArtikel(this,'Review')">Review</button>
+  </div>
+
+  <!-- Article Grid -->
+  <div class="artikel-grid" id="artikelGrid">
+    {% for a in artikel %}
+    <div class="artikel-card" data-status="{{ a.status }}">
+      <div class="artikel-card__header">
+        <span class="kategori-tag">{{ a.kategori }}</span>
+        <span class="artikel-status
+          {% if a.status == 'Publikasi' %}astatus-pub
+          {% elif a.status == 'Draft' %}astatus-draft
+          {% else %}astatus-review{% endif %}">
+          {% if a.status == 'Publikasi' %}<i class="bi bi-broadcast"></i>
+          {% elif a.status == 'Draft' %}<i class="bi bi-pencil-square"></i>
+          {% else %}<i class="bi bi-hourglass-split"></i>{% endif %}
+          {{ a.status }}
+        </span>
+      </div>
+      <h6 class="artikel-card__title">{{ a.judul }}</h6>
+      <div class="artikel-card__meta">
+        <div class="artikel-author">
+          <div class="author-dot">{{ a.penulis[0] }}</div>
+          <span>{{ a.penulis }}</span>
+        </div>
+        <span class="artikel-date">{{ a.tanggal }}</span>
+      </div>
+      {% if a.views > 0 %}
+      <div class="artikel-views">
+        <i class="bi bi-eye"></i>
+        {{ '{:,}'.format(a.views) }} views
+      </div>
+      {% endif %}
+      <div class="artikel-card__footer">
+        <button class="act-btn act-btn--view" title="Lihat"><i class="bi bi-eye"></i></button>
+        <button class="act-btn act-btn--edit" title="Edit"><i class="bi bi-pencil"></i></button>
+        <button class="act-btn act-btn--del"  title="Hapus"><i class="bi bi-trash3"></i></button>
+        {% if a.status == 'Draft' %}
+        <button class="btn-primary-sm ms-auto" style="font-size:.72rem;padding:5px 12px">
+          <i class="bi bi-send"></i> Publikasi
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+function filterArtikel(btn, filter) {
+  document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('chip-btn--active'));
+  btn.classList.add('chip-btn--active');
+  document.querySelectorAll('.artikel-card').forEach(card => {
+    const show = filter === 'semua' || card.dataset.status === filter;
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+document.getElementById('searchArtikel').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.artikel-card').forEach(card => {
+    card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

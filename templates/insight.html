@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Insight AI — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Insight AI{% endblock %}
+{% block page_subtitle %}Analisis kecerdasan buatan untuk kesehatan mental pengguna{% endblock %}
+
+{% block content %}
+
+<!-- ── AI HERO BANNER ── -->
+<div class="ai-banner mb-4">
+  <div class="ai-banner__left">
+    <span class="ai-tag"><i class="bi bi-stars"></i> Powered by MIND AI v2.4</span>
+    <h2>Analisis Kesehatan Mental <span>Berbasis AI</span></h2>
+    <p>Platform MIND DRIJI menggunakan model AI untuk mendeteksi pola, memberikan insight, dan membantu pengguna memahami kondisi mentalnya secara personal.</p>
+    <button class="btn-primary-sm" style="margin-top:6px;padding:10px 20px">
+      <i class="bi bi-play-circle"></i> Jalankan Analisis Baru
+    </button>
+  </div>
+  <div class="ai-banner__right">
+    <div class="ai-orb">
+      <div class="ai-orb__ring ai-orb__ring--1"></div>
+      <div class="ai-orb__ring ai-orb__ring--2"></div>
+      <div class="ai-orb__ring ai-orb__ring--3"></div>
+      <div class="ai-orb__core"><i class="bi bi-cpu-fill"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSIGHT STATS ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(14,165,233,.1);color:var(--cyan)"><i class="bi bi-graph-up-arrow"></i></div>
+      <div>
+        <p class="mini-stat-label">Total Analisis</p>
+        <h4 class="mini-stat-val">2,891</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(16,185,129,.1);color:#059669"><i class="bi bi-patch-check-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Akurasi Model</p>
+        <h4 class="mini-stat-val">88.4%</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)"><i class="bi bi-lightning-charge-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Avg. Waktu Proses</p>
+        <h4 class="mini-stat-val">312ms</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Kasus Prioritas</p>
+        <h4 class="mini-stat-val">23</h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOTTOM ROW ── -->
+<div class="row g-4">
+
+  <!-- Category Distribution -->
+  <div class="col-12 col-lg-5">
+    <div class="content-card h-100">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Distribusi Kategori</h5>
+          <p class="content-card__sub">Kondisi yang terdeteksi AI</p>
+        </div>
+      </div>
+      <div class="category-list">
+        {% set categories = [
+          ('Stres Tinggi',       38, 'var(--red)',      1099),
+          ('Kecemasan Sedang',   27, 'var(--orange)',   780),
+          ('Burnout',            18, 'var(--cyan)',     520),
+          ('Depresi Ringan',     10, 'var(--blue-acc)', 289),
+          ('Kondisi Normal',      7, 'var(--green)',    203),
+        ] %}
+        {% for label, pct, color, count in categories %}
+        <div class="cat-row">
+          <div class="cat-label-wrap">
+            <span class="cat-dot" style="background:{{ color }}"></span>
+            <span class="cat-name">{{ label }}</span>
+          </div>
+          <div class="cat-bar-wrap">
+            <div class="cat-bar">
+              <div class="cat-fill" style="width:{{ pct }}%;background:{{ color }}"></div>
+            </div>
+          </div>
+          <span class="cat-pct">{{ pct }}%</span>
+          <span class="cat-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Insights -->
+  <div class="col-12 col-lg-7">
+    <div class="content-card h-100">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Insight Terbaru</h5>
+          <p class="content-card__sub">Hasil analisis AI real-time</p>
+        </div>
+        <button class="chip-btn chip-btn--active">Semua</button>
+      </div>
+      <div class="insight-list">
+        {% set insights = [
+          ('U-1024', 'Andi Pratama',    'Stres Tinggi',     92, 'danger',  '2 menit lalu',  'Tingkat stres sangat tinggi terdeteksi. Rekomendasi sesi konseling segera.'),
+          ('U-0987', 'Sari Dewi',       'Kecemasan Sedang', 67, 'warning', '18 menit lalu', 'Pola kecemasan meningkat dalam 3 hari terakhir. Pantau terus.'),
+          ('U-0756', 'Mega Putri',      'Kondisi Normal',   15, 'ok',      '1 jam lalu',    'Kondisi mental stabil. Tidak diperlukan intervensi saat ini.'),
+          ('U-1198', 'Fajar Rahman',    'Burnout',          74, 'warning', '3 jam lalu',    'Tanda-tanda burnout terdeteksi. Sarankan pengurangan beban kerja.'),
+          ('U-0621', 'Rina Kusuma',     'Depresi Ringan',   58, 'warning', 'Kemarin',       'Episode depresi ringan. Perlu follow-up dengan dokter.'),
+        ] %}
+        {% for uid, nama, cond, score, level, time, desc in insights %}
+        <div class="insight-item">
+          <div class="insight-header">
+            <div class="d-flex align-items-center gap-2">
+              <div class="insight-avatar">{{ nama[0] }}</div>
+              <div>
+                <p class="insight-name">{{ nama }}</p>
+                <p class="insight-uid">{{ uid }} · {{ time }}</p>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="insight-cond cond-{{ level }}">{{ cond }}</span>
+              <div class="insight-score-wrap">
+                <div class="insight-score-ring" style="--score:{{ score }}">
+                  <span>{{ score }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="insight-desc">{{ desc }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

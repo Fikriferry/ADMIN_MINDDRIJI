@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Notifikasi — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Notifikasi{% endblock %}
+{% block page_subtitle %}Pusat pemberitahuan & peringatan sistem{% endblock %}
+
+{% block content %}
+
+<!-- ── HEADER ROW ── -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  <div class="d-flex align-items-center gap-3">
+    <div class="notif-summary-badge">
+      <i class="bi bi-bell-fill"></i>
+      <span>{{ unread }} belum dibaca</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="chip-btn chip-btn--active" onclick="filterNotif(this,'semua')">Semua</button>
+      <button class="chip-btn" onclick="filterNotif(this,'belum')">Belum Dibaca</button>
+      <button class="chip-btn" onclick="filterNotif(this,'success')">Sukses</button>
+      <button class="chip-btn" onclick="filterNotif(this,'warning')">Peringatan</button>
+    </div>
+  </div>
+  <button class="btn-outline-sm" onclick="markAllRead()">
+    <i class="bi bi-check2-all"></i> Tandai Semua Dibaca
+  </button>
+</div>
+
+<!-- ── NOTIF LIST ── -->
+<div class="notif-stack" id="notifList">
+  {% for n in notifikasi %}
+  <div class="notif-card {% if not n.dibaca %}notif-card--unread{% endif %}"
+       data-tipe="{{ n.tipe }}"
+       data-baca="{{ 'dibaca' if n.dibaca else 'belum' }}"
+       id="notif-{{ n.id }}">
+    <div class="notif-card__icon icon-{{ n.tipe }}">
+      {% if n.tipe == 'success' %}<i class="bi bi-check-circle-fill"></i>
+      {% elif n.tipe == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>
+      {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+    </div>
+    <div class="notif-card__body">
+      <div class="notif-card__head">
+        <h6 class="notif-title">{{ n.judul }}</h6>
+        <div class="d-flex align-items-center gap-2">
+          <span class="notif-time">{{ n.waktu }}</span>
+          {% if not n.dibaca %}<span class="unread-dot"></span>{% endif %}
+        </div>
+      </div>
+      <p class="notif-isi">{{ n.isi }}</p>
+    </div>
+    <div class="notif-card__actions">
+      <button class="act-btn act-btn--view" title="Tandai dibaca" onclick="markRead({{ n.id }})">
+        <i class="bi bi-check2"></i>
+      </button>
+      <button class="act-btn act-btn--del" title="Hapus">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function filterNotif(btn, filter) {
+  document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('chip-btn--active'));
+  btn.classList.add('chip-btn--active');
+  document.querySelectorAll('.notif-card').forEach(card => {
+    const tipe = card.dataset.tipe;
+    const baca = card.dataset.baca;
+    let show = filter === 'semua'
+      || (filter === 'belum' && baca === 'belum')
+      || tipe === filter;
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+function markRead(id) {
+  const card = document.getElementById('notif-' + id);
+  card.classList.remove('notif-card--unread');
+  card.dataset.baca = 'dibaca';
+  const dot = card.querySelector('.unread-dot');
+  if (dot) dot.remove();
+}
+
+function markAllRead() {
+  document.querySelectorAll('.notif-card').forEach(card => {
+    card.classList.remove('notif-card--unread');
+    card.dataset.baca = 'dibaca';
+    const dot = card.querySelector('.unread-dot');
+    if (dot) dot.remove();
+  });
+}
+</script>
+{% endblock %}

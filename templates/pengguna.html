@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Pengguna — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Manajemen Pengguna{% endblock %}
+{% block page_subtitle %}Kelola seluruh akun pengguna platform{% endblock %}
+
+{% block content %}
+
+<!-- ── STAT ROW ── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)"><i class="bi bi-people-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Total Pengguna</p>
+        <h4 class="mini-stat-val">1,245</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(16,185,129,.1);color:#059669"><i class="bi bi-person-check-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Pengguna Aktif</p>
+        <h4 class="mini-stat-val">1,102</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-person-exclamation"></i></div>
+      <div>
+        <p class="mini-stat-label">Pending</p>
+        <h4 class="mini-stat-val">18</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="mini-stat-card">
+      <div class="mini-stat-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="bi bi-person-x-fill"></i></div>
+      <div>
+        <p class="mini-stat-label">Nonaktif</p>
+        <h4 class="mini-stat-val">125</h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TABLE CARD ── -->
+<div class="content-card">
+  <div class="content-card__head">
+    <div>
+      <h5 class="content-card__title">Daftar Pengguna</h5>
+      <p class="content-card__sub">{{ pengguna|length }} pengguna ditampilkan</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchInput" placeholder="Cari pengguna..." />
+      </div>
+      <button class="btn-primary-sm">
+        <i class="bi bi-plus-lg"></i> Tambah
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="d-flex gap-2 flex-wrap">
+    <button class="chip-btn chip-btn--active" onclick="filterTable(this,'semua')">Semua</button>
+    <button class="chip-btn" onclick="filterTable(this,'Aktif')">Aktif</button>
+    <button class="chip-btn" onclick="filterTable(this,'Nonaktif')">Nonaktif</button>
+    <button class="chip-btn" onclick="filterTable(this,'Pending')">Pending</button>
+    <button class="chip-btn" onclick="filterTable(this,'Dokter')">Dokter</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data-table" id="userTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pengguna</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Bergabung</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in pengguna %}
+        <tr data-status="{{ u.status }}" data-role="{{ u.role }}">
+          <td class="text-muted" style="font-size:.78rem">{{ u.id }}</td>
+          <td>
+            <div class="user-cell">
+              <div class="user-avatar-sm" style="background: linear-gradient(135deg,var(--blue-acc),var(--cyan))">{{ u.avatar }}</div>
+              <span class="user-name">{{ u.nama }}</span>
+            </div>
+          </td>
+          <td class="text-muted" style="font-size:.82rem">{{ u.email }}</td>
+          <td>
+            <span class="role-badge role-{{ u.role|lower|replace('.','')|replace(' ','') }}">{{ u.role }}</span>
+          </td>
+          <td class="text-muted" style="font-size:.8rem">{{ u.bergabung }}</td>
+          <td>
+            <span class="status-pill
+              {% if u.status == 'Aktif' %}pill-aktif
+              {% elif u.status == 'Nonaktif' %}pill-nonaktif
+              {% else %}pill-pending{% endif %}">
+              {{ u.status }}
+            </span>
+          </td>
+          <td>
+            <div class="action-btns">
+              <button class="act-btn act-btn--view" title="Detail"><i class="bi bi-eye"></i></button>
+              <button class="act-btn act-btn--edit" title="Edit"><i class="bi bi-pencil"></i></button>
+              <button class="act-btn act-btn--del"  title="Hapus"><i class="bi bi-trash3"></i></button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="table-footer">
+    <p class="text-muted" style="font-size:.78rem">Menampilkan 1–{{ pengguna|length }} dari 1,245 pengguna</p>
+    <div class="pagination-btns">
+      <button class="pg-btn" disabled><i class="bi bi-chevron-left"></i></button>
+      <button class="pg-btn pg-btn--active">1</button>
+      <button class="pg-btn">2</button>
+      <button class="pg-btn">3</button>
+      <span class="pg-ellipsis">…</span>
+      <button class="pg-btn">156</button>
+      <button class="pg-btn"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterTable(btn, filter) {
+  document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('chip-btn--active'));
+  btn.classList.add('chip-btn--active');
+  document.querySelectorAll('#userTable tbody tr').forEach(row => {
+    const status = row.dataset.status;
+    const role   = row.dataset.role;
+    const show   = filter === 'semua' || status === filter || role === filter;
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#userTable tbody tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — MIND DRIJI Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Pantau semua aktivitas platform Anda{% endblock %}
+
+{% block content %}
+
+<!-- ── GREETING BANNER ── -->
+<div class="greeting-banner">
+  <div class="greeting-text">
+    <h2>Selamat Datang, <span>Admin</span> 👋</h2>
+    <p>Berikut ringkasan aktivitas platform MIND DRIJI hari ini.</p>
+  </div>
+  <div class="greeting-date">
+    <i class="bi bi-calendar3"></i>
+    <span id="currentDate"></span>
+  </div>
+</div>
+
+<!-- ── STAT CARDS ── -->
+<div class="row g-4 mb-4">
+
+  <!-- Card: Jumlah Pengguna -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-card__header">
+        <div class="stat-card__icon">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <span class="stat-card__badge badge-up">
+          <i class="bi bi-arrow-up-short"></i>+12%
+        </span>
+      </div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Jumlah Pengguna</p>
+        <h3 class="stat-card__value" data-target="1245">0</h3>
+        <p class="stat-card__sub">Total pengguna terdaftar</p>
+      </div>
+      <div class="stat-card__footer">
+        <div class="stat-mini-bar">
+          <div class="stat-mini-fill" style="width: 72%"></div>
+        </div>
+        <span class="stat-mini-text">72% dari target bulan ini</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Sesi Aktif (placeholder) -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card stat-card--cyan">
+      <div class="stat-card__header">
+        <div class="stat-card__icon">
+          <i class="bi bi-lightning-charge-fill"></i>
+        </div>
+        <span class="stat-card__badge badge-up">
+          <i class="bi bi-arrow-up-short"></i>+8%
+        </span>
+      </div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Sesi Aktif</p>
+        <h3 class="stat-card__value" data-target="348">0</h3>
+        <p class="stat-card__sub">Pengguna aktif hari ini</p>
+      </div>
+      <div class="stat-card__footer">
+        <div class="stat-mini-bar">
+          <div class="stat-mini-fill" style="width: 55%"></div>
+        </div>
+        <span class="stat-mini-text">55% dari rata-rata mingguan</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Insight AI (placeholder) -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card stat-card--soft">
+      <div class="stat-card__header">
+        <div class="stat-card__icon">
+          <i class="bi bi-cpu-fill"></i>
+        </div>
+        <span class="stat-card__badge badge-neutral">
+          <i class="bi bi-dash"></i> Stabil
+        </span>
+      </div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Insight AI Diproses</p>
+        <h3 class="stat-card__value" data-target="2891">0</h3>
+        <p class="stat-card__sub">Total analisis dihasilkan</p>
+      </div>
+      <div class="stat-card__footer">
+        <div class="stat-mini-bar">
+          <div class="stat-mini-fill" style="width: 88%"></div>
+        </div>
+        <span class="stat-mini-text">88% akurasi model</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card: Artikel (placeholder) -->
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card stat-card--soft">
+      <div class="stat-card__header">
+        <div class="stat-card__icon">
+          <i class="bi bi-file-earmark-text-fill"></i>
+        </div>
+        <span class="stat-card__badge badge-down">
+          <i class="bi bi-arrow-down-short"></i>-2%
+        </span>
+      </div>
+      <div class="stat-card__body">
+        <p class="stat-card__label">Artikel Dipublikasi</p>
+        <h3 class="stat-card__value" data-target="64">0</h3>
+        <p class="stat-card__sub">Konten aktif platform</p>
+      </div>
+      <div class="stat-card__footer">
+        <div class="stat-mini-bar">
+          <div class="stat-mini-fill" style="width: 40%"></div>
+        </div>
+        <span class="stat-mini-text">40% dari kuota konten</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /row stats -->
+
+<!-- ── BOTTOM ROW: Chart Area + Activity ── -->
+<div class="row g-4">
+
+  <!-- Chart Placeholder -->
+  <div class="col-12 col-lg-8">
+    <div class="content-card">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Grafik Pertumbuhan Pengguna</h5>
+          <p class="content-card__sub">Tren 6 bulan terakhir</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="chip-btn chip-btn--active">Bulan</button>
+          <button class="chip-btn">Minggu</button>
+          <button class="chip-btn">Hari</button>
+        </div>
+      </div>
+      <div class="chart-placeholder">
+        <!-- SVG Illustrative Chart -->
+        <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" class="fake-chart">
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="0" y1="50"  x2="600" y2="50"  stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="0" y1="100" x2="600" y2="100" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="0" y1="150" x2="600" y2="150" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
+          <!-- Area fill -->
+          <path d="M0,160 C60,140 100,120 160,100 C220,80 260,60 320,70 C380,80 420,50 480,40 C520,33 560,30 600,28 L600,200 L0,200 Z"
+                fill="url(#chartGrad)"/>
+          <!-- Line -->
+          <path d="M0,160 C60,140 100,120 160,100 C220,80 260,60 320,70 C380,80 420,50 480,40 C520,33 560,30 600,28"
+                fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Dots -->
+          <circle cx="160" cy="100" r="4" fill="#0ea5e9"/>
+          <circle cx="320" cy="70"  r="4" fill="#0ea5e9"/>
+          <circle cx="480" cy="40"  r="4" fill="#0ea5e9"/>
+          <circle cx="600" cy="28"  r="5" fill="#fff" stroke="#0ea5e9" stroke-width="2.5"/>
+        </svg>
+        <div class="chart-labels">
+          <span>Jan</span><span>Feb</span><span>Mar</span>
+          <span>Apr</span><span>Mei</span><span>Jun</span>
+        </div>
+        <div class="chart-coming-soon">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Integrasi chart lengkap segera hadir</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="col-12 col-lg-4">
+    <div class="content-card h-100">
+      <div class="content-card__head">
+        <div>
+          <h5 class="content-card__title">Aktivitas Terkini</h5>
+          <p class="content-card__sub">Update real-time</p>
+        </div>
+        <button class="icon-btn"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+
+      <div class="activity-list">
+
+        <div class="activity-item">
+          <div class="activity-icon activity-icon--blue">
+            <i class="bi bi-person-plus"></i>
+          </div>
+          <div class="activity-body">
+            <p class="activity-title">Pengguna baru terdaftar</p>
+            <p class="activity-meta">2 menit yang lalu</p>
+          </div>
+          <span class="activity-dot dot-blue"></span>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon activity-icon--cyan">
+            <i class="bi bi-cpu"></i>
+          </div>
+          <div class="activity-body">
+            <p class="activity-title">AI Insight diproses</p>
+            <p class="activity-meta">15 menit yang lalu</p>
+          </div>
+          <span class="activity-dot dot-cyan"></span>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon activity-icon--green">
+            <i class="bi bi-file-earmark-check"></i>
+          </div>
+          <div class="activity-body">
+            <p class="activity-title">Artikel baru dipublikasi</p>
+            <p class="activity-meta">1 jam yang lalu</p>
+          </div>
+          <span class="activity-dot dot-green"></span>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon activity-icon--orange">
+            <i class="bi bi-bell"></i>
+          </div>
+          <div class="activity-body">
+            <p class="activity-title">Notifikasi sistem dikirim</p>
+            <p class="activity-meta">3 jam yang lalu</p>
+          </div>
+          <span class="activity-dot dot-orange"></span>
+        </div>
+
+        <div class="activity-item">
+          <div class="activity-icon activity-icon--blue">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <div class="activity-body">
+            <p class="activity-title">Pembaruan keamanan berhasil</p>
+            <p class="activity-meta">Kemarin, 22:04</p>
+          </div>
+          <span class="activity-dot dot-blue"></span>
+        </div>
+
+      </div>
+
+      <a href="#" class="view-all-btn">Lihat semua aktivitas <i class="bi bi-arrow-right"></i></a>
+    </div>
+  </div>
+
+</div><!-- /row bottom -->
+
+{% endblock %}
