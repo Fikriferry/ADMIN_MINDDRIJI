@@ -1,120 +1,171 @@
 {% extends "base.html" %}
 {% block title %}Pengguna — MIND DRIJI Admin{% endblock %}
 {% block page_title %}Manajemen Pengguna{% endblock %}
-{% block page_subtitle %}Kelola seluruh akun pengguna platform{% endblock %}
+{% block page_subtitle %}Data pengguna terdaftar dari aplikasi MIND DRIJI{% endblock %}
 
 {% block content %}
 
-<!-- ── STAT ROW ── -->
+<!-- ── DB ERROR BANNER ── -->
+{% if db_error %}
+<div class="db-error-banner mb-4">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <div>
+    <strong>Gagal terhubung ke database</strong>
+    <p>{{ db_error }}</p>
+  </div>
+  <a href="{{ url_for('pengguna') }}" class="db-error-retry">
+    <i class="bi bi-arrow-clockwise"></i> Coba lagi
+  </a>
+</div>
+{% endif %}
+
+<!-- ── STAT CARD ── -->
 <div class="row g-3 mb-4">
-  <div class="col-6 col-xl-3">
+  <div class="col-12 col-sm-4 col-xl-3">
     <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)"><i class="bi bi-people-fill"></i></div>
+      <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)">
+        <i class="bi bi-people-fill"></i>
+      </div>
       <div>
         <p class="mini-stat-label">Total Pengguna</p>
-        <h4 class="mini-stat-val">1,245</h4>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-xl-3">
-    <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(16,185,129,.1);color:#059669"><i class="bi bi-person-check-fill"></i></div>
-      <div>
-        <p class="mini-stat-label">Pengguna Aktif</p>
-        <h4 class="mini-stat-val">1,102</h4>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-xl-3">
-    <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-person-exclamation"></i></div>
-      <div>
-        <p class="mini-stat-label">Pending</p>
-        <h4 class="mini-stat-val">18</h4>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-xl-3">
-    <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(239,68,68,.1);color:var(--red)"><i class="bi bi-person-x-fill"></i></div>
-      <div>
-        <p class="mini-stat-label">Nonaktif</p>
-        <h4 class="mini-stat-val">125</h4>
+        <h4 class="mini-stat-val">{{ stats.total }}</h4>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ── TABLE CARD ── -->
+<!-- ── MAIN TABLE CARD ── -->
 <div class="content-card">
+
+  <!-- Header -->
   <div class="content-card__head">
     <div>
       <h5 class="content-card__title">Daftar Pengguna</h5>
-      <p class="content-card__sub">{{ pengguna|length }} pengguna ditampilkan</p>
+      <p class="content-card__sub">
+        {% if search %}
+          <strong>{{ total }}</strong> hasil untuk "<strong>{{ search }}</strong>"
+        {% else %}
+          {{ total }} pengguna terdaftar
+        {% endif %}
+      </p>
     </div>
     <div class="d-flex gap-2 align-items-center flex-wrap">
-      <div class="search-box">
-        <i class="bi bi-search"></i>
-        <input type="text" id="searchInput" placeholder="Cari pengguna..." />
-      </div>
-      <button class="btn-primary-sm">
-        <i class="bi bi-plus-lg"></i> Tambah
-      </button>
+      <span class="source-badge">
+        <i class="bi bi-database-fill-check"></i> Supabase Live
+      </span>
+      <form method="GET" action="{{ url_for('pengguna') }}" class="d-flex gap-2">
+        <div class="search-box">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" placeholder="Cari nama, email, no. HP..."
+                 value="{{ search }}" autocomplete="off" />
+          {% if search %}
+          <a href="{{ url_for('pengguna') }}" class="search-clear">
+            <i class="bi bi-x-lg"></i>
+          </a>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn-primary-sm">Cari</button>
+      </form>
+      <a href="{{ url_for('pengguna') }}" class="icon-btn" title="Refresh data">
+        <i class="bi bi-arrow-clockwise"></i>
+      </a>
     </div>
   </div>
 
-  <!-- Filter chips -->
-  <div class="d-flex gap-2 flex-wrap">
-    <button class="chip-btn chip-btn--active" onclick="filterTable(this,'semua')">Semua</button>
-    <button class="chip-btn" onclick="filterTable(this,'Aktif')">Aktif</button>
-    <button class="chip-btn" onclick="filterTable(this,'Nonaktif')">Nonaktif</button>
-    <button class="chip-btn" onclick="filterTable(this,'Pending')">Pending</button>
-    <button class="chip-btn" onclick="filterTable(this,'Dokter')">Dokter</button>
-  </div>
-
+  <!-- Table -->
+  {% if pengguna %}
   <div class="table-wrap">
     <table class="data-table" id="userTable">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="width:48px">#</th>
           <th>Pengguna</th>
-          <th>Email</th>
-          <th>Role</th>
+          <th>No. HP</th>
+          <th>Jenis Kelamin</th>
+          <th>Tanggal Lahir</th>
+          <th>Usia</th>
           <th>Bergabung</th>
-          <th>Status</th>
-          <th>Aksi</th>
+          <th style="width:90px">Aksi</th>
         </tr>
       </thead>
       <tbody>
         {% for u in pengguna %}
-        <tr data-status="{{ u.status }}" data-role="{{ u.role }}">
-          <td class="text-muted" style="font-size:.78rem">{{ u.id }}</td>
+        <tr id="row-{{ u.id }}">
+
+          <td class="text-muted" style="font-size:.78rem">
+            {{ loop.index + (page - 1) * per_page }}
+          </td>
+
+          <!-- Nama + email -->
           <td>
             <div class="user-cell">
-              <div class="user-avatar-sm" style="background: linear-gradient(135deg,var(--blue-acc),var(--cyan))">{{ u.avatar }}</div>
-              <span class="user-name">{{ u.nama }}</span>
+              {% if u.avatar_url %}
+                <img src="{{ u.avatar_url }}" class="user-avatar-img" alt="{{ u.nama_lengkap }}">
+              {% else %}
+                <div class="user-avatar-sm" style="
+                  background: linear-gradient(135deg,
+                  hsl({{ (loop.index0 % 12) * 30 }}, 60%, 45%),
+                  hsl({{ (loop.index0 % 12) * 30 + 40 }}, 65%, 55%))">
+                  {{ u.avatar_letter }}
+                </div>
+              {% endif %}
+              <div>
+                <p class="user-name">{{ u.nama_lengkap }}</p>
+                <p class="user-email">{{ u.email }}</p>
+              </div>
             </div>
           </td>
-          <td class="text-muted" style="font-size:.82rem">{{ u.email }}</td>
+
+          <!-- No HP -->
           <td>
-            <span class="role-badge role-{{ u.role|lower|replace('.','')|replace(' ','') }}">{{ u.role }}</span>
-          </td>
-          <td class="text-muted" style="font-size:.8rem">{{ u.bergabung }}</td>
-          <td>
-            <span class="status-pill
-              {% if u.status == 'Aktif' %}pill-aktif
-              {% elif u.status == 'Nonaktif' %}pill-nonaktif
-              {% else %}pill-pending{% endif %}">
-              {{ u.status }}
+            <span class="contact-text">
+              {% if u.no_hp != '-' %}
+                <i class="bi bi-telephone" style="font-size:.75rem;color:var(--text-muted)"></i>
+                {{ u.no_hp }}
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
             </span>
           </td>
+
+          <!-- Jenis Kelamin -->
+          <td>
+            {% if u.jenis_kelamin == 'Laki-laki' %}
+              <span class="gender-badge gender-m"><i class="bi bi-gender-male"></i> L</span>
+            {% elif u.jenis_kelamin == 'Perempuan' %}
+              <span class="gender-badge gender-f"><i class="bi bi-gender-female"></i> P</span>
+            {% else %}
+              <span class="text-muted" style="font-size:.8rem">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Tanggal Lahir -->
+          <td style="font-size:.8rem;color:var(--text-muted)">
+            {{ u.tanggal_lahir if u.tanggal_lahir != '-' else '—' }}
+          </td>
+
+          <!-- Usia -->
+          <td style="font-size:.82rem;color:var(--text-body);font-weight:500">
+            {{ u.usia if u.usia != '-' else '—' }}
+          </td>
+
+          <!-- Bergabung -->
+          <td style="font-size:.8rem;color:var(--text-muted)">{{ u.bergabung }}</td>
+
+          <!-- Aksi -->
           <td>
             <div class="action-btns">
-              <button class="act-btn act-btn--view" title="Detail"><i class="bi bi-eye"></i></button>
-              <button class="act-btn act-btn--edit" title="Edit"><i class="bi bi-pencil"></i></button>
-              <button class="act-btn act-btn--del"  title="Hapus"><i class="bi bi-trash3"></i></button>
+              <button class="act-btn act-btn--view" title="Lihat detail"
+                onclick="showDetail({{ u|tojson }})">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="act-btn act-btn--del" title="Hapus pengguna"
+                onclick="confirmHapus('{{ u.id }}', '{{ u.nama_lengkap }}')">
+                <i class="bi bi-trash3"></i>
+              </button>
             </div>
           </td>
+
         </tr>
         {% endfor %}
       </tbody>
@@ -123,36 +174,154 @@
 
   <!-- Pagination -->
   <div class="table-footer">
-    <p class="text-muted" style="font-size:.78rem">Menampilkan 1–{{ pengguna|length }} dari 1,245 pengguna</p>
+    <p class="text-muted" style="font-size:.78rem">
+      Menampilkan {{ (page-1)*per_page + 1 }}–{{ [page*per_page, total]|min }}
+      dari {{ total }} pengguna
+    </p>
+    {% if total_pages > 1 %}
     <div class="pagination-btns">
-      <button class="pg-btn" disabled><i class="bi bi-chevron-left"></i></button>
-      <button class="pg-btn pg-btn--active">1</button>
-      <button class="pg-btn">2</button>
-      <button class="pg-btn">3</button>
-      <span class="pg-ellipsis">…</span>
-      <button class="pg-btn">156</button>
-      <button class="pg-btn"><i class="bi bi-chevron-right"></i></button>
+      {% if page > 1 %}
+        <a href="{{ url_for('pengguna', q=search, page=page-1) }}" class="pg-btn">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      {% else %}
+        <button class="pg-btn" disabled><i class="bi bi-chevron-left"></i></button>
+      {% endif %}
+
+      {% for p in range(1, total_pages+1) %}
+        {% if p == page %}
+          <span class="pg-btn pg-btn--active">{{ p }}</span>
+        {% elif p == 1 or p == total_pages or (p >= page-1 and p <= page+1) %}
+          <a href="{{ url_for('pengguna', q=search, page=p) }}" class="pg-btn">{{ p }}</a>
+        {% elif p == page-2 or p == page+2 %}
+          <span class="pg-ellipsis">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if page < total_pages %}
+        <a href="{{ url_for('pengguna', q=search, page=page+1) }}" class="pg-btn">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <button class="pg-btn" disabled><i class="bi bi-chevron-right"></i></button>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <!-- Empty state -->
+  <div class="empty-state">
+    <div class="empty-icon">
+      {% if search %}<i class="bi bi-search"></i>
+      {% else %}<i class="bi bi-people"></i>{% endif %}
+    </div>
+    <h5>
+      {% if search %}Tidak ada hasil untuk "{{ search }}"
+      {% else %}Belum ada pengguna terdaftar{% endif %}
+    </h5>
+    <p>
+      {% if search %}
+        Coba kata kunci lain atau <a href="{{ url_for('pengguna') }}" style="color:var(--blue-acc)">reset pencarian</a>.
+      {% else %}
+        Pengguna akan muncul di sini setelah mendaftar melalui aplikasi Flutter.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+
+
+<!-- ══ MODAL DETAIL ══ -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+    <div class="modal-content detail-modal">
+      <div class="detail-modal__header">
+        <div class="detail-avatar" id="detailAvatar">A</div>
+        <div>
+          <h5 id="detailNama">—</h5>
+          <p id="detailEmail">—</p>
+        </div>
+        <button class="ms-auto icon-btn" data-bs-dismiss="modal" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.7)">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="detail-modal__body">
+        <div class="detail-row">
+          <span class="detail-label"><i class="bi bi-telephone"></i> No. HP</span>
+          <span id="detailHp" class="detail-val">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label"><i class="bi bi-gender-ambiguous"></i> Jenis Kelamin</span>
+          <span id="detailGender" class="detail-val">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label"><i class="bi bi-cake2"></i> Tanggal Lahir</span>
+          <span id="detailTgl" class="detail-val">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label"><i class="bi bi-person-badge"></i> Usia</span>
+          <span id="detailUsia" class="detail-val">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label"><i class="bi bi-calendar-plus"></i> Bergabung</span>
+          <span id="detailBergabung" class="detail-val">—</span>
+        </div>
+        <div class="detail-row" style="border-bottom:none">
+          <span class="detail-label"><i class="bi bi-fingerprint"></i> User ID</span>
+          <span id="detailId" class="detail-val" style="font-size:.68rem;font-family:monospace;word-break:break-all">—</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+
+<!-- ══ MODAL HAPUS ══ -->
+<div class="modal fade" id="hapusModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+    <div class="modal-content logout-modal">
+      <div class="logout-modal__icon">
+        <i class="bi bi-trash3-fill"></i>
+      </div>
+      <h5 class="logout-modal__title">Hapus Pengguna?</h5>
+      <p class="logout-modal__text">
+        Anda akan menghapus <strong id="hapusNama">pengguna ini</strong> secara permanen.
+        Tindakan ini tidak bisa dibatalkan.
+      </p>
+      <div class="logout-modal__actions">
+        <button class="logout-btn-cancel" data-bs-dismiss="modal">Batal</button>
+        <form id="hapusForm" method="POST" style="flex:1">
+          <button type="submit" class="logout-btn-confirm" style="width:100%">
+            <i class="bi bi-trash3"></i> Hapus
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
-function filterTable(btn, filter) {
-  document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('chip-btn--active'));
-  btn.classList.add('chip-btn--active');
-  document.querySelectorAll('#userTable tbody tr').forEach(row => {
-    const status = row.dataset.status;
-    const role   = row.dataset.role;
-    const show   = filter === 'semua' || status === filter || role === filter;
-    row.style.display = show ? '' : 'none';
-  });
+function showDetail(u) {
+  document.getElementById('detailAvatar').textContent    = u.avatar_letter;
+  document.getElementById('detailNama').textContent      = u.nama_lengkap;
+  document.getElementById('detailEmail').textContent     = u.email;
+  document.getElementById('detailHp').textContent        = u.no_hp !== '-' ? u.no_hp : '—';
+  document.getElementById('detailGender').textContent    = u.jenis_kelamin !== '-' ? u.jenis_kelamin : '—';
+  document.getElementById('detailTgl').textContent       = u.tanggal_lahir !== '-' ? u.tanggal_lahir : '—';
+  document.getElementById('detailUsia').textContent      = u.usia !== '-' ? u.usia : '—';
+  document.getElementById('detailBergabung').textContent = u.bergabung;
+  document.getElementById('detailId').textContent        = u.id;
+  new bootstrap.Modal(document.getElementById('detailModal')).show();
 }
 
-document.getElementById('searchInput').addEventListener('input', function() {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('#userTable tbody tr').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
+function confirmHapus(uid, nama) {
+  document.getElementById('hapusNama').textContent = nama;
+  document.getElementById('hapusForm').action = '/pengguna/' + uid + '/hapus';
+  new bootstrap.Modal(document.getElementById('hapusModal')).show();
+}
 </script>
+
 {% endblock %}
