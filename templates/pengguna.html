@@ -5,7 +5,6 @@
 
 {% block content %}
 
-<!-- ── DB ERROR BANNER ── -->
 {% if db_error %}
 <div class="db-error-banner mb-4">
   <i class="bi bi-exclamation-triangle-fill"></i>
@@ -19,7 +18,6 @@
 </div>
 {% endif %}
 
-<!-- ── STAT CARD ── -->
 <div class="row g-3 mb-4">
   <div class="col-12 col-sm-4 col-xl-3">
     <div class="mini-stat-card">
@@ -34,10 +32,8 @@
   </div>
 </div>
 
-<!-- ── MAIN TABLE CARD ── -->
 <div class="content-card">
 
-  <!-- Header -->
   <div class="content-card__head">
     <div>
       <h5 class="content-card__title">Daftar Pengguna</h5>
@@ -72,7 +68,6 @@
     </div>
   </div>
 
-  <!-- Table -->
   {% if pengguna %}
   <div class="table-wrap">
     <table class="data-table" id="userTable">
@@ -96,7 +91,6 @@
             {{ loop.index + (page - 1) * per_page }}
           </td>
 
-          <!-- Nama + email -->
           <td>
             <div class="user-cell">
               {% if u.avatar_url %}
@@ -116,7 +110,6 @@
             </div>
           </td>
 
-          <!-- No HP -->
           <td>
             <span class="contact-text">
               {% if u.no_hp != '-' %}
@@ -128,7 +121,6 @@
             </span>
           </td>
 
-          <!-- Jenis Kelamin -->
           <td>
             {% if u.jenis_kelamin == 'Laki-laki' %}
               <span class="gender-badge gender-m"><i class="bi bi-gender-male"></i> L</span>
@@ -139,20 +131,16 @@
             {% endif %}
           </td>
 
-          <!-- Tanggal Lahir -->
           <td style="font-size:.8rem;color:var(--text-muted)">
             {{ u.tanggal_lahir if u.tanggal_lahir != '-' else '—' }}
           </td>
 
-          <!-- Usia -->
           <td style="font-size:.82rem;color:var(--text-body);font-weight:500">
             {{ u.usia if u.usia != '-' else '—' }}
           </td>
 
-          <!-- Bergabung -->
           <td style="font-size:.8rem;color:var(--text-muted)">{{ u.bergabung }}</td>
 
-          <!-- Aksi -->
           <td>
             <div class="action-btns">
               <button class="act-btn act-btn--view" title="Lihat detail"
@@ -172,7 +160,6 @@
     </table>
   </div>
 
-  <!-- Pagination -->
   <div class="table-footer">
     <p class="text-muted" style="font-size:.78rem">
       Menampilkan {{ (page-1)*per_page + 1 }}–{{ [page*per_page, total]|min }}
@@ -210,7 +197,6 @@
   </div>
 
   {% else %}
-  <!-- Empty state -->
   <div class="empty-state">
     <div class="empty-icon">
       {% if search %}<i class="bi bi-search"></i>
@@ -232,8 +218,6 @@
 
 </div>
 
-
-<!-- ══ MODAL DETAIL ══ -->
 <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
     <div class="modal-content detail-modal">
@@ -277,8 +261,6 @@
   </div>
 </div>
 
-
-<!-- ══ MODAL HAPUS ══ -->
 <div class="modal fade" id="hapusModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
     <div class="modal-content logout-modal">
@@ -301,7 +283,6 @@
     </div>
   </div>
 </div>
-
 
 <script>
 function showDetail(u) {

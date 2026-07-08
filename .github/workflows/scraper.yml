@@ -1,0 +1,41 @@
+name: Mind Driji Automated Scraper
+
+on:
+  schedule:
+    # Menggunakan waktu UTC. Contoh ini berjalan setiap hari jam 7 pagi WIB (00:00 UTC)
+    - cron: '0 0 * * *'
+  
+  # Tombol manual "Run Workflow" di tab Actions GitHub
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Execute Scraper Script
+      env:
+        # 🟡 Menghubungkan secret key GitHub ke script Python
+        MONGO_URI: ${{ secrets.MONGO_URI }}
+      run: python scraper.py
+
+    - name: Commit and Push Visualizations
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add wordcloud.png top_words.png
+        git commit -m "Update charts otomatis [skip ci]" || echo "Tidak ada perubahan visualisasi baru"
+        git push
