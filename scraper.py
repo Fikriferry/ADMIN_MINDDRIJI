@@ -34,18 +34,30 @@ with sync_playwright() as p:
     
     for i in range(jumlah_klik):
         try:
-            print(f"Mengklik tombol Load More ke-{i+1}...")
-            # Robot akan mencari tombol yang mengandung teks "Load More"
-            tombol_load_more = page.locator("text=Load More").first
+            print(f"Mencoba memunculkan tombol Load More ke-{i+1}...")
             
-            if tombol_load_more.is_visible():
+            # 1. Robot melakukan scroll ke bawah halaman agar tombolnya terpancing keluar
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            time.sleep(2) # Jeda 2 detik setelah scroll biar webnya loading
+            
+            # 2. 🟡 RACIKAN BARU: Tembak spesifik ke elemen BUTTON yang berisi teks "Load More"
+            # Sesuai dengan inspect HTML yang kamu temukan
+            tombol_load_more = page.wait_for_selector('button:has-text("Load More")', timeout=5000)
+            
+            if tombol_load_more:
+                # 3. Sebelum klik, scroll ke elemen tombolnya agar pas di layar robot
+                tombol_load_more.scroll_into_view_if_needed()
+                time.sleep(1)
+                
+                # Klik tombolnya!
                 tombol_load_more.click()
-                time.sleep(3) # Tunggu 3 detik biar artikel baru selesai loading
+                print(f"-> 🚀 BERHASIL KLIK tombol Load More ke-{i+1}!")
+                time.sleep(3) # Tunggu 3 detik biar data artikel baru selesai dirender Next.js
             else:
-                print("Tombol Load More sudah tidak terlihat, semua data mungkin sudah keluar.")
+                print("Tombol tidak ditemukan.")
                 break
         except Exception as e:
-            print(f"Batal klik karena: {e}")
+            print("Tombol Load More sudah tidak terlihat/halaman sudah mentok habis.")
             break
             
     # Ambil seluruh isi HTML halaman setelah semua tombol di-klik
