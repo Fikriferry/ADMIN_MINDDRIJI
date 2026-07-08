@@ -42,6 +42,6 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add wordcloud.png top_words.png
+        git add static/wordcloud.png static/top_words.png
         git commit -m "Update charts otomatis [skip ci]" || echo "Tidak ada perubahan visualisasi baru"
         git push

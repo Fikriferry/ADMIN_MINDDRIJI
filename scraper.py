@@ -175,7 +175,7 @@ plt.figure(figsize=(15,6))
 plt.imshow(wordcloud)
 plt.axis("off")
 plt.title("WordCloud Artikel Doomscrolling")
-plt.savefig("wordcloud.png") 
+plt.savefig("static/wordcloud.png")
 plt.close()
 
 # Top 10 Words
@@ -187,7 +187,7 @@ top_df = pd.DataFrame(top_words, columns=["word", "count"])
 plt.figure(figsize=(10,5))
 sns.barplot(x="count", y="word", data=top_df)
 plt.title("Top 10 Kata yang Sering Muncul")
-plt.savefig("top_words.png") 
+plt.savefig("static/top_words.png")
 plt.close()
 
 print("===== PROSES SELESAI =====")
