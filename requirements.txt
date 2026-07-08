@@ -10,3 +10,4 @@ nltk
 wordcloud
 matplotlib
 seaborn
+playwright

@@ -12,29 +12,67 @@ from nltk.tokenize import word_tokenize
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import seaborn as sns
-
+from playwright.sync_api import sync_playwright
 # =====================================
-# 1. DATA COLLECTION
+# 1. DATA COLLECTION (AUTOMATED BROWSER)
 # =====================================
-print("Menjalankan scraping...")
+print("Menjalankan scraping dengan Playwright...")
 url = "https://www.idntimes.com/search?q=doomscrolling"
 headers = {"User-Agent": "Mozilla/5.0"}
-
-response = requests.get(url, headers=headers)
-soup = BeautifulSoup(response.text, "lxml")
 articles = []
 
+# Menjalankan browser mini di latar belakang
+with sync_playwright() as p:
+    print("Membuka browser...")
+    browser = p.chromium.launch(headless=True) # headless=True agar berjalan tanpa layar di GitHub
+    page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    page.goto(url)
+    
+    # 🟡 MAU KLIK "LOAD MORE" BERAPA KALI? 
+    # Misal kita klik 3 kali untuk memunculkan +30 artikel tambahan
+    jumlah_klik = 3 
+    
+    for i in range(jumlah_klik):
+        try:
+            print(f"Mengklik tombol Load More ke-{i+1}...")
+            # Robot akan mencari tombol yang mengandung teks "Load More"
+            tombol_load_more = page.locator("text=Load More").first
+            
+            if tombol_load_more.is_visible():
+                tombol_load_more.click()
+                time.sleep(3) # Tunggu 3 detik biar artikel baru selesai loading
+            else:
+                print("Tombol Load More sudah tidak terlihat, semua data mungkin sudah keluar.")
+                break
+        except Exception as e:
+            print(f"Batal klik karena: {e}")
+            break
+            
+    # Ambil seluruh isi HTML halaman setelah semua tombol di-klik
+    html_terakhir = page.content()
+    browser.close()
+
+# Umpan HTML dari Playwright ke BeautifulSoup seperti biasa
+soup = BeautifulSoup(html_terakhir, "lxml")
 titles = soup.find_all("h3")
+
 for t in titles:
     title = t.text.strip()
     parent = t.find_parent("a")
     if parent:
         link = parent.get("href")
+        # Pastikan link-nya lengkap
+        if link.startswith("/"):
+            link = "https://www.idntimes.com" + link
         articles.append({"title": title, "link": link})
 
 df = pd.DataFrame(articles)
-print("Jumlah artikel ditemukan:", len(df))
+# Hapus duplikat link jika ada
+df.drop_duplicates(subset=["link"], inplace=True)
+print("Jumlah total artikel ditemukan:", len(df))
 
+# --- FUNGSI AMBIL DETAIL ARTIKEL (Tetap pakai requests biasa karena ini buka link satu-satu) ---
+import requests # tetap butuh di sini
 def get_article_detail(url):
     try:
         res = requests.get(url, headers=headers)
