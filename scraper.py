@@ -68,16 +68,25 @@ print("Jumlah artikel valid:", len(df))
 # 2. DATA STORAGE (MongoDB)
 # =====================================
 print("Menghubungkan ke MongoDB...")
-# 🟡 AMBIL DARI GITHUB SECRETS (Jangan di-hardcode rawan hack!)
 MONGO_URI = os.environ.get("MONGO_URI") 
 client = MongoClient(MONGO_URI, tls=True)
 db = client["mind_driji"]
 collection = db["artikel_doomscrolling"]
 
+# 🟡 SUNTIKKAN STATUS DEFAULT UNTUK WEB ADMIN FLASK
+df["status"] = "Review" 
+
 data = df.to_dict("records")
 if data:
+    # 🟡 BERSIHKAN DATA LAMA (Wipe & Replace)
+    print("Membersihkan data lama di database agar tidak menumpuk...")
+    collection.delete_many({}) 
+    
+    # Masukkan data baru yang fresh
     collection.insert_many(data)
-print("Data berhasil disimpan ke MongoDB.")
+    print("Data terbaru berhasil diperbarui ke MongoDB.")
+else:
+    print("Scraping kosong, data lama tidak dihapus demi keamanan.")
 
 # =====================================
 # 3. DATA PREPARATION
@@ -116,7 +125,7 @@ plt.figure(figsize=(15,6))
 plt.imshow(wordcloud)
 plt.axis("off")
 plt.title("WordCloud Artikel Doomscrolling")
-plt.savefig("wordcloud.png") # 🟡 Diubah jadi SAVE biar ga macet di server
+plt.savefig("wordcloud.png") 
 plt.close()
 
 # Top 10 Words
@@ -128,7 +137,7 @@ top_df = pd.DataFrame(top_words, columns=["word", "count"])
 plt.figure(figsize=(10,5))
 sns.barplot(x="count", y="word", data=top_df)
 plt.title("Top 10 Kata yang Sering Muncul")
-plt.savefig("top_words.png") # 🟡 Simpan gambar
+plt.savefig("top_words.png") 
 plt.close()
 
 print("===== PROSES SELESAI =====")
