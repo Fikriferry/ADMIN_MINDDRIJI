@@ -1,18 +1,15 @@
 import os
 import re
 import time
-from collections import Counter
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-import seaborn as sns
 from playwright.sync_api import sync_playwright
+
 # =====================================
 # 1. DATA COLLECTION (AUTOMATED BROWSER)
 # =====================================
@@ -21,50 +18,38 @@ url = "https://www.idntimes.com/search?q=doomscrolling"
 headers = {"User-Agent": "Mozilla/5.0"}
 articles = []
 
-# Menjalankan browser mini di latar belakang
 with sync_playwright() as p:
     print("Membuka browser...")
-    browser = p.chromium.launch(headless=True) # headless=True agar berjalan tanpa layar di GitHub
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
     page.goto(url)
-    
-    # 🟡 MAU KLIK "LOAD MORE" BERAPA KALI? 
-    # Misal kita klik 3 kali untuk memunculkan +30 artikel tambahan
-    jumlah_klik = 3 
-    
+
+    jumlah_klik = 3
+
     for i in range(jumlah_klik):
         try:
             print(f"Mencoba memunculkan tombol Load More ke-{i+1}...")
-            
-            # 1. Robot melakukan scroll ke bawah halaman agar tombolnya terpancing keluar
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            time.sleep(2) # Jeda 2 detik setelah scroll biar webnya loading
-            
-            # 2. 🟡 RACIKAN BARU: Tembak spesifik ke elemen BUTTON yang berisi teks "Load More"
-            # Sesuai dengan inspect HTML yang kamu temukan
+            time.sleep(2)
+
             tombol_load_more = page.wait_for_selector('button:has-text("Load More")', timeout=5000)
-            
+
             if tombol_load_more:
-                # 3. Sebelum klik, scroll ke elemen tombolnya agar pas di layar robot
                 tombol_load_more.scroll_into_view_if_needed()
                 time.sleep(1)
-                
-                # Klik tombolnya!
                 tombol_load_more.click()
                 print(f"-> 🚀 BERHASIL KLIK tombol Load More ke-{i+1}!")
-                time.sleep(3) # Tunggu 3 detik biar data artikel baru selesai dirender Next.js
+                time.sleep(3)
             else:
                 print("Tombol tidak ditemukan.")
                 break
-        except Exception as e:
+        except Exception:
             print("Tombol Load More sudah tidak terlihat/halaman sudah mentok habis.")
             break
-            
-    # Ambil seluruh isi HTML halaman setelah semua tombol di-klik
+
     html_terakhir = page.content()
     browser.close()
 
-# Umpan HTML dari Playwright ke BeautifulSoup seperti biasa
 soup = BeautifulSoup(html_terakhir, "lxml")
 titles = soup.find_all("h3")
 
@@ -73,18 +58,15 @@ for t in titles:
     parent = t.find_parent("a")
     if parent:
         link = parent.get("href")
-        # Pastikan link-nya lengkap
         if link.startswith("/"):
             link = "https://www.idntimes.com" + link
         articles.append({"title": title, "link": link})
 
 df = pd.DataFrame(articles)
-# Hapus duplikat link jika ada
 df.drop_duplicates(subset=["link"], inplace=True)
-print("Jumlah total artikel ditemukan:", len(df))
+print("Jumlah total artikel ditemukan (hasil scraping baru):", len(df))
 
-# --- FUNGSI AMBIL DETAIL ARTIKEL (Tetap pakai requests biasa karena ini buka link satu-satu) ---
-import requests # tetap butuh di sini
+
 def get_article_detail(url):
     try:
         res = requests.get(url, headers=headers)
@@ -95,8 +77,9 @@ def get_article_detail(url):
         date = date.text.strip() if date else ""
         category = url.split("/")[3]
         return content, date, category
-    except:
+    except Exception:
         return "", "", ""
+
 
 contents, dates, categories = [], [], []
 for link in df["link"]:
@@ -112,34 +95,10 @@ df["category"] = categories
 df["content_length"] = df["content"].apply(len)
 df = df[df["content_length"] > 100]
 df.reset_index(drop=True, inplace=True)
-print("Jumlah artikel valid:", len(df))
+print("Jumlah artikel valid (hasil scraping baru):", len(df))
 
 # =====================================
-# 2. DATA STORAGE (MongoDB)
-# =====================================
-print("Menghubungkan ke MongoDB...")
-MONGO_URI = os.environ.get("MONGO_URI") 
-client = MongoClient(MONGO_URI, tls=True)
-db = client["mind_driji"]
-collection = db["artikel_doomscrolling"]
-
-# 🟡 SUNTIKKAN STATUS DEFAULT UNTUK WEB ADMIN FLASK
-df["status"] = "Review" 
-
-data = df.to_dict("records")
-if data:
-    # 🟡 BERSIHKAN DATA LAMA (Wipe & Replace)
-    print("Membersihkan data lama di database agar tidak menumpuk...")
-    collection.delete_many({}) 
-    
-    # Masukkan data baru yang fresh
-    collection.insert_many(data)
-    print("Data terbaru berhasil diperbarui ke MongoDB.")
-else:
-    print("Scraping kosong, data lama tidak dihapus demi keamanan.")
-
-# =====================================
-# 3. DATA PREPARATION
+# 2. DATA PREPARATION (dijalankan sebelum simpan, supaya clean_content ikut ke-upsert)
 # =====================================
 print("Melakukan pre-processing data...")
 nltk.download('punkt', quiet=True)
@@ -147,6 +106,7 @@ nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
 
 stop_words = set(stopwords.words('indonesian'))
+
 
 def clean_text(text):
     text = str(text).lower()
@@ -157,6 +117,7 @@ def clean_text(text):
     words = [word for word in words if word not in stop_words]
     return " ".join(words)
 
+
 df["clean_content"] = df["content"].apply(clean_text)
 df["clean_title"] = df["title"].apply(clean_text)
 df.dropna(inplace=True)
@@ -164,30 +125,78 @@ df = df[df["clean_content"] != ""]
 df.reset_index(drop=True, inplace=True)
 
 # =====================================
-# 4. ANALYSIS & VISUALIZATION
+# 3. DATA STORAGE (MongoDB) — UPSERT, TIDAK WIPE, ANTI-DUPLIKAT
 # =====================================
-print("Membuat visualisasi...")
-all_text = " ".join(df["clean_content"])
+print("Menghubungkan ke MongoDB...")
+MONGO_URI = os.environ.get("MONGO_URI")
+client = MongoClient(MONGO_URI, tls=True)
+db = client["mind_driji"]
+collection = db["artikel_doomscrolling"]
 
-# Wordcloud
-wordcloud = WordCloud(width=1200, height=600, background_color='white').generate(all_text)
-plt.figure(figsize=(15,6))
-plt.imshow(wordcloud)
-plt.axis("off")
-plt.title("WordCloud Artikel Doomscrolling")
-plt.savefig("static/wordcloud.png")
-plt.close()
+# Pastikan field "link" unik di level database, jaring pengaman kedua
+# selain logic upsert di bawah. create_index aman dipanggil berulang kali,
+# tidak akan bikin index dobel kalau sudah ada.
+collection.create_index("link", unique=True)
 
-# Top 10 Words
-words = all_text.split()
-word_counts = Counter(words)
-top_words = word_counts.most_common(10)
-top_df = pd.DataFrame(top_words, columns=["word", "count"])
+data = df.to_dict("records")
 
-plt.figure(figsize=(10,5))
-sns.barplot(x="count", y="word", data=top_df)
-plt.title("Top 10 Kata yang Sering Muncul")
-plt.savefig("static/top_words.png")
-plt.close()
+# Cek dulu link mana saja yang SUDAH ada di database sebelum upsert,
+# supaya kita bisa tahu persis judul-judul mana yang benar-benar baru.
+links_hasil_scraping = [row["link"] for row in data]
+links_sudah_ada = set()
+if links_hasil_scraping:
+    existing_cursor = collection.find(
+        {"link": {"$in": links_hasil_scraping}}, {"link": 1}
+    )
+    links_sudah_ada = {doc["link"] for doc in existing_cursor}
+
+print("=" * 50)
+print(f"Total artikel hasil scraping kali ini : {len(data)}")
+print(f"Sudah ada di database sebelumnya       : {len(links_sudah_ada)}")
+print(f"Berpotensi artikel baru                : {len(data) - len(links_sudah_ada)}")
+print("=" * 50)
+
+if data:
+    operations = []
+    judul_baru = []
+    for row in data:
+        row_copy = dict(row)
+        link = row_copy.pop("link")
+
+        if link not in links_sudah_ada:
+            judul_baru.append(row_copy.get("title", link))
+
+        operations.append(
+            UpdateOne(
+                {"link": link},
+                {
+                    # $set: field ini akan selalu diupdate tiap kali artikel yang sama
+                    # ditemukan lagi (konten/tanggal/kategori bisa saja berubah/diperbaiki)
+                    "$set": row_copy,
+                    # $setOnInsert: field ini HANYA diisi saat dokumen benar-benar baru.
+                    # Kalau artikel sudah ada, status hasil review admin di Flask
+                    # (Review/Approved/Rejected, dll) TIDAK akan ketimpa ulang jadi "Review".
+                    "$setOnInsert": {"link": link, "status": "Review"},
+                },
+                upsert=True,
+            )
+        )
+
+    result = collection.bulk_write(operations, ordered=False)
+
+    print("\n----- HASIL SCRAPING -----")
+    if result.upserted_count > 0:
+        print(f"✅ Ada {result.upserted_count} artikel BARU masuk ke database:")
+        for judul in judul_baru:
+            print(f"   - {judul}")
+    else:
+        print("ℹ️  Tidak ada artikel baru. Semua artikel hasil scraping kali ini "
+              "sudah pernah tersimpan sebelumnya.")
+
+    print(f"🔄 Artikel lama yang datanya diperbarui: {result.modified_count}")
+    print(f"📦 Total dokumen di koleksi sekarang    : {collection.count_documents({})}")
+    print("---------------------------\n")
+else:
+    print("Scraping kosong (tidak ada artikel ditemukan), tidak ada perubahan ke database.")
 
 print("===== PROSES SELESAI =====")
