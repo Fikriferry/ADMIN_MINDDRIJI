@@ -3,12 +3,18 @@ import uuid
 import random
 from functools import wraps
 from datetime import date, datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Blueprint
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from werkzeug.security import generate_password_hash, check_password_hash
+from pymongo import MongoClient
+import re
+from collections import Counter
+from datetime import datetime
+from bson.objectid import ObjectId
+import threading
 
 load_dotenv()
 
@@ -33,6 +39,12 @@ app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
 app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_USERNAME")
 mail = Mail(app)
+
+# ── CONFIGURATION MONGODB CLIENT (GUDANG HASIL SCRAPING) ─────
+MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017') 
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client["mind_driji"] # Nama database MongoDB kamu
+mongo_collection = mongo_db["artikel_doomscrolling"]
 
 # ── DATA DUMMY DASHBOARD WEB ADMIN ───────────────────────────
 NOTIFIKASI = [
@@ -520,14 +532,157 @@ def api_pengguna():
         return jsonify({"success": True, "total": len(pengguna_list), "data": pengguna_list})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+    
+# ── 🚀 API UNTUK MENGIRIM DAFTAR ARTIKEL KE FLUTTER ──
+@app.route('/api/articles', methods=['GET'])
+def get_all_articles():
+    try:
+        # Tarik semua artikel, urutkan dari yang paling baru (_id: -1)
+        cursor = mongo_collection.find({}).sort('_id', -1)
+        
+        articles_list = []
+        for doc in cursor:
+            # PENTING: Ubah ObjectId MongoDB menjadi string biasa agar bisa di-render jadi JSON
+            doc['_id'] = str(doc['_id'])
+            articles_list.append(doc)
+            
+        return jsonify({
+            "success": True,
+            "total": len(articles_list),
+            "data": articles_list
+        }), 200
+        
+    except Exception as e:
+        print(f"💥 Error ambil artikel: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
+# ── 🟡 HELPER FUNCTION: Mengubah string "22 Jul 2022, 11:32 WIB" menjadi objek tanggal Python
+def parse_mongo_date(date_str):
+    if not date_str:
+        return None
+    try:
+        # 1. Bersihkan teks: hapus WIB, hapus koma, jadikan huruf kecil semua
+        clean_str = date_str.replace("WIB", "").replace(",", "").lower().strip()
+        parts = clean_str.split() # Contoh hasil: ['22', 'jul', '2022', '11:32']
+        
+        if len(parts) < 4:
+            return None
+            
+        day = parts[0]
+        bulan_asal = parts[1]
+        year = parts[2]
+        time_str = parts[3]
+        
+        # 2. Kamus angka bulan (Mencakup variasi ketikan Indonesia & Inggris)
+        month_map = {
+            "jan": "01", "feb": "02", "mar": "03", "apr": "04", 
+            "mei": "05", "may": "05", "jun": "06", "jul": "07", 
+            "agu": "08", "agt": "08", "aug": "08", "sep": "09", 
+            "okt": "10", "oct": "10", "nov": "11", "des": "12", "dec": "12"
+        }
+        
+        month_num = month_map.get(bulan_asal)
+        if not month_num:
+            print(f"⚠️ Bulan tidak dikenali: {bulan_asal}")
+            return None
+            
+        # 3. Satukan menjadi format angka murni: "22 07 2022 11:32"
+        numeric_date_str = f"{day} {month_num} {year} {time_str}"
+        
+        # 4. Parse menggunakan format angka (%m) -> Bebas dari intervensi bahasa OS Laptop!
+        return datetime.strptime(numeric_date_str, "%d %m %Y %H:%M")
+        
+    except Exception as e:
+        print(f"❌ Gagal total parse tanggal: {date_str}, error: {e}")
+        return None
+
+
+# ── 🚀 INTERFACE API UNTUK GRAPH & WORDCLOUD (LIVE MONGODB) ──
+@app.route('/api/chart-data', methods=['GET'])
+@login_required # Hanya admin yang sudah login lewat Supabase yang bisa akses
+def get_chart_data():
+    start_date_str = request.args.get('start_date') # Format dari HTML: YYYY-MM-DD
+    end_date_str = request.args.get('end_date')     # Format dari HTML: YYYY-MM-DD
+    
+    try:
+        # 1. Tarik semua data mentah dari MongoDB terlebih dahulu
+        cursor = mongo_collection.find({})
+        filtered_articles = []
+        
+        # 2. Proses Saring/Filter Berdasarkan Tanggal di Sisi Python
+        if start_date_str and end_date_str:
+            start_dt = datetime.strptime(start_date_str, "%Y-%m-%d")
+            # Set jam ke 23:59:59 di hari terakhir agar artikel di tanggal akhir tetap terbaca
+            end_dt = datetime.strptime(end_date_str + " 23:59:59", "%Y-%m-%d %H:%M:%S")
+            
+            for doc in cursor:
+                mongo_date_str = doc.get("date") or doc.get("tanggal")
+                doc_dt = parse_mongo_date(mongo_date_str)
+                
+                # Jika konversi sukses dan masuk ke dalam range filter admin
+                if doc_dt and (start_dt <= doc_dt <= end_dt):
+                    filtered_articles.append(doc)
+            
+            print(f"🔍 [FILTER AKTIF] Berhasil menemukan {len(filtered_articles)} artikel dari rentang {start_date_str} s/d {end_date_str}")
+        else:
+            # JIKA TANPA FILTER (Kondisi pertama kali Admin buka Dashboard)
+            filtered_articles = list(cursor)
+            print(f"🔍 [DEFAULT DASHBOARD] Menampilkan seluruh data: {len(filtered_articles)} artikel")
+            
+        # 3. Satukan semua teks konten artikel (field 'content') menjadi satu teks besar
+        all_text = " ".join([str(a.get('content', '')) for a in filtered_articles]).lower()
+        
+        # Bersihkan tanda baca (titik, koma, seru, dll) agar murni kata bersih
+        all_text = re.sub(r'[^\w\s]', '', all_text)
+        words = all_text.split()
+        
+        # 4. Filter Stopwords (Kata sambung fungsional bahasa Indonesia agar tidak mengotori grafik)
+        stopwords = {
+            'yang', 'dan', 'di', 'dari', 'ke', 'ini', 'itu', 'with', 'dengan', 'atau', 'untuk', 
+            'ada', 'adalah', 'bisa', 'bahwa', 'pada', 'juga', 'sudah', 'saya', 'kamu', 'dia',
+            'mereka', 'kita', 'secara', 'dalam', 'bukan', 'tidak', 'tak', 'telah', 'bagi',
+            'oleh', 'akan', 'namun', 'tapi', 'ia', 'seperti', 'lebih', 'hal', 'mengapa'
+        }
+        # Hanya ambil kata yang bukan kata sambung & panjangnya lebih dari 2 huruf
+        filtered_words = [w for w in words if w not in stopwords and len(w) > 2]
+        
+        # 5. Hitung Frekuensi Kata menggunakan Counter
+        word_counts = Counter(filtered_words)
+        
+        # Format 1: Untuk Top 10 Bar Chart (Chart.js)
+        top_10 = word_counts.most_common(10)
+        bar_labels = [w[0] for w in top_10]
+        bar_values = [w[1] for w in top_10]
+        
+        # Format 2: Untuk WordCloud (AnyChart butuh format array of object [{'x': kata, 'value': jumlah}])
+        top_50 = word_counts.most_common(50) # Ambil 50 kata biar WordCloud-nya ramai dan padat
+        wordcloud_data = [{"x": w[0], "value": w[1]} for w in top_50]
+        
+        return jsonify({
+            "success": True,
+            "total_articles": len(filtered_articles),
+            "bar_chart": {
+                "labels": bar_labels,
+                "values": bar_values
+            },
+            "wordcloud": wordcloud_data
+        })
+        
+    except Exception as e:
+        print(f"💥 Terjadi error pada API chart-data: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    
 
 # ── ROUTES DASHBOARD PANEL WEB ADMIN (SERVE HTML) ────────────
 
 @app.route('/')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', active_page='dashboard')
+    total_artikel = mongo_collection.count_documents({})
+    return render_template(
+        'dashboard.html',
+        total_artikel=total_artikel,
+        active_page='dashboard')
 
 @app.route('/pengguna')
 @login_required
@@ -600,8 +755,70 @@ def notifikasi():
 
 @app.route('/artikel')
 @login_required
-def artikel():
-    return render_template('artikel.html', artikel=ARTIKEL, active_page='artikel')
+def artikel_page():
+    cursor = mongo_collection.find().sort('_id', -1)
+
+    artikel_list = []
+    for doc in cursor:
+        artikel_list.append({
+            'id': str(doc.get('_id')),
+            'title': doc.get('title', 'Tanpa Judul'),
+            'link': doc.get('link', '#'),
+            'content': doc.get('content', ''),
+            'date': doc.get('date', '-'),
+            'category': doc.get('category', 'Umum'),
+            'content_length': int(doc.get('content_length', 0)),
+            'status': doc.get('status', 'Draft'),
+        })
+
+    # Statistik
+    status_counter = Counter(a['status'] for a in artikel_list)
+    kategori_counter = Counter(a['category'] for a in artikel_list)
+
+    status_counts = dict(status_counter)
+    kategori_counts = dict(kategori_counter)
+    kategori_list = sorted(kategori_counter.keys())
+    total_kategori = len(kategori_list)
+
+    # Top 5 artikel berdasarkan panjang konten
+    top_artikel = sorted(
+        artikel_list,
+        key=lambda a: a['content_length'],
+        reverse=True
+    )[:5]
+
+    top_artikel = [
+        {
+            'title': a['title'],
+            'content_length': a['content_length']
+        }
+        for a in top_artikel
+    ]
+
+    total_artikel = len(artikel_list)
+    total_publikasi = (
+        status_counter.get('Publikasi', 0)
+        + status_counter.get('Published', 0)
+    )
+    total_draft = status_counter.get('Draft', 0)
+    total_review = status_counter.get('Review', 0)
+    total_karakter = sum(a['content_length'] for a in artikel_list)
+
+    return render_template(
+        'artikel.html',
+        artikel=artikel_list,
+        status_counts=status_counts,
+        kategori_counts=kategori_counts,
+        kategori_list=kategori_list,
+        top_artikel=top_artikel,
+        total_artikel=total_artikel,
+        total_publikasi=total_publikasi,
+        total_draft=total_draft,
+        total_review=total_review,
+        total_karakter=total_karakter,
+        total_kategori=total_kategori,
+        active_page='artikel'
+    )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

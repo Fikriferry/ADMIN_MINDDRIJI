@@ -7,31 +7,106 @@
 
 <!-- ── STATS ROW ── -->
 <div class="row g-3 mb-4">
-  <div class="col-6 col-xl-3">
+  <div class="col-12 col-md-4">
     <div class="mini-stat-card">
       <div class="mini-stat-icon" style="background:rgba(30,111,217,.1);color:var(--blue-acc)"><i class="bi bi-file-earmark-text-fill"></i></div>
-      <div><p class="mini-stat-label">Total Artikel</p><h4 class="mini-stat-val">64</h4></div>
+      <div><p class="mini-stat-label">Total Artikel</p><h4 class="mini-stat-val">{{ total_artikel }}</h4></div>
     </div>
   </div>
-  <div class="col-6 col-xl-3">
+  <div class="col-12 col-md-4">
     <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(16,185,129,.1);color:#059669"><i class="bi bi-send-check-fill"></i></div>
-      <div><p class="mini-stat-label">Dipublikasi</p><h4 class="mini-stat-val">48</h4></div>
+      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-tags-fill"></i></div>
+      <div><p class="mini-stat-label">Kategori Aktif</p><h4 class="mini-stat-val">{{ total_kategori }}</h4></div>
     </div>
   </div>
-  <div class="col-6 col-xl-3">
+  <div class="col-12 col-md-4">
     <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(245,158,11,.1);color:var(--orange)"><i class="bi bi-file-earmark-ruled"></i></div>
-      <div><p class="mini-stat-label">Draft</p><h4 class="mini-stat-val">11</h4></div>
-    </div>
-  </div>
-  <div class="col-6 col-xl-3">
-    <div class="mini-stat-card">
-      <div class="mini-stat-icon" style="background:rgba(14,165,233,.1);color:var(--cyan)"><i class="bi bi-eye-fill"></i></div>
-      <div><p class="mini-stat-label">Total Views</p><h4 class="mini-stat-val">24.8K</h4></div>
+      <div class="mini-stat-icon" style="background:rgba(14,165,233,.1);color:var(--cyan)"><i class="bi bi-textarea-t"></i></div>
+      <div><p class="mini-stat-label">Total Karakter</p><h4 class="mini-stat-val">{{ '{:,}'.format(total_karakter) }}</h4></div>
     </div>
   </div>
 </div>
+
+<!-- ── VISUALISASI ARTIKEL ── -->
+<div class="content-card mb-4 viz-card">
+  <div class="content-card__head">
+    <div>
+      <h5 class="content-card__title">Statistik & Visualisasi Artikel</h5>
+      <p class="content-card__sub">Ringkasan kategori dan panjang konten artikel</p>
+    </div>
+    <span class="badge bg-success px-3 py-2 viz-live-badge">
+      <i class="bi bi-check-circle-fill me-1"></i> Realtime
+    </span>
+  </div>
+
+  <div class="row g-3 p-3">
+
+    <!-- Artikel per Kategori (Bar) -->
+    <div class="col-12 col-lg-6">
+      <div class="viz-panel h-100 d-flex flex-column">
+        <p class="small text-muted fw-bold mb-2 text-center">
+          <i class="bi bi-bar-chart-fill me-1"></i> Artikel per Kategori
+        </p>
+        <div style="position:relative; height:240px;">
+          <canvas id="kategoriBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 5 Artikel Terpanjang -->
+    <div class="col-12 col-lg-6">
+      <div class="viz-panel h-100 d-flex flex-column">
+        <p class="small text-muted fw-bold mb-2 text-center">
+          <i class="bi bi-file-text-fill me-1"></i> Top 5 Artikel Terpanjang
+        </p>
+        <div style="position:relative; height:240px;">
+          <canvas id="topViewsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.viz-card{ overflow: visible; }
+.viz-live-badge{
+  border-radius: 30px;
+  font-weight: 500;
+  animation: vizPulse 2s infinite;
+}
+@keyframes vizPulse{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(25,135,84,.35); }
+  50%{ box-shadow: 0 0 0 6px rgba(25,135,84,0); }
+}
+.viz-panel{
+  border: 1px solid #eef0f4;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+}
+.viz-legend{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: .75rem;
+}
+.viz-legend__item{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-weight: 600;
+}
+.viz-legend__dot{
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+</style>
 
 <!-- ── MAIN CARD ── -->
 <div class="content-card">
@@ -54,43 +129,28 @@
   <!-- Filter chips -->
   <div class="d-flex gap-2 flex-wrap">
     <button class="chip-btn chip-btn--active" onclick="filterArtikel(this,'semua')">Semua</button>
-    <button class="chip-btn" onclick="filterArtikel(this,'Publikasi')">Dipublikasi</button>
-    <button class="chip-btn" onclick="filterArtikel(this,'Draft')">Draft</button>
-    <button class="chip-btn" onclick="filterArtikel(this,'Review')">Review</button>
+    {% for kategori in kategori_list %}
+    <button class="chip-btn" onclick="filterArtikel(this,'{{ kategori }}')">{{ kategori|capitalize }}</button>
+    {% endfor %}
   </div>
 
   <!-- Article Grid -->
   <div class="artikel-grid" id="artikelGrid">
     {% for a in artikel %}
-    <div class="artikel-card" data-status="{{ a.status }}">
+    <div class="artikel-card" data-category="{{ a.category }}">
       <div class="artikel-card__header">
-        <span class="kategori-tag">{{ a.kategori }}</span>
-        <span class="artikel-status
-          {% if a.status == 'Publikasi' %}astatus-pub
-          {% elif a.status == 'Draft' %}astatus-draft
-          {% else %}astatus-review{% endif %}">
-          {% if a.status == 'Publikasi' %}<i class="bi bi-broadcast"></i>
-          {% elif a.status == 'Draft' %}<i class="bi bi-pencil-square"></i>
-          {% else %}<i class="bi bi-hourglass-split"></i>{% endif %}
-          {{ a.status }}
-        </span>
+        <span class="kategori-tag">{{ a.category }}</span>
       </div>
-      <h6 class="artikel-card__title">{{ a.judul }}</h6>
+      <h6 class="artikel-card__title">{{ a.title }}</h6>
       <div class="artikel-card__meta">
-        <div class="artikel-author">
-          <div class="author-dot">{{ a.penulis[0] }}</div>
-          <span>{{ a.penulis }}</span>
-        </div>
-        <span class="artikel-date">{{ a.tanggal }}</span>
+        <span class="artikel-date"><i class="bi bi-calendar3 me-1"></i>{{ a.date }}</span>
       </div>
-      {% if a.views > 0 %}
       <div class="artikel-views">
-        <i class="bi bi-eye"></i>
-        {{ '{:,}'.format(a.views) }} views
+        <i class="bi bi-textarea-t"></i>
+        {{ '{:,}'.format(a.content_length) }} karakter
       </div>
-      {% endif %}
       <div class="artikel-card__footer">
-        <button class="act-btn act-btn--view" title="Lihat"><i class="bi bi-eye"></i></button>
+        <a href="{{ a.link }}" target="_blank" class="act-btn act-btn--view" title="Buka artikel asli"><i class="bi bi-box-arrow-up-right"></i></a>
         <button class="act-btn act-btn--edit" title="Edit"><i class="bi bi-pencil"></i></button>
         <button class="act-btn act-btn--del"  title="Hapus"><i class="bi bi-trash3"></i></button>
         {% if a.status == 'Draft' %}
@@ -105,11 +165,51 @@
 </div>
 
 <script>
+const kategoriCounts = {{ kategori_counts | tojson }};
+const topArtikel     = {{ top_artikel | tojson }};
+
+// === Bar: Artikel per Kategori ===
+new Chart(document.getElementById('kategoriBarChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(kategoriCounts),
+    datasets: [{
+      label: 'Jumlah Artikel',
+      data: Object.values(kategoriCounts),
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+        g.addColorStop(0, '#6366f1'); g.addColorStop(1, '#0ea5e9');
+        return g;
+      },
+      borderRadius: 8, barThickness: 22
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+  }
+});
+
+// === Bar Horizontal: Top 5 Artikel Terpanjang ===
+new Chart(document.getElementById('topViewsChart'), {
+  type: 'bar',
+  data: {
+    labels: topArtikel.map(a => a.title.length > 18 ? a.title.slice(0, 18) + '…' : a.title),
+    datasets: [{ label: 'Karakter', data: topArtikel.map(a => a.content_length), backgroundColor: '#f59e0b', borderRadius: 8, barThickness: 14 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: { x: { grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } }
+  }
+});
+
 function filterArtikel(btn, filter) {
   document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('chip-btn--active'));
   btn.classList.add('chip-btn--active');
   document.querySelectorAll('.artikel-card').forEach(card => {
-    const show = filter === 'semua' || card.dataset.status === filter;
+    const show = filter === 'semua' || card.dataset.category === filter;
     card.style.display = show ? '' : 'none';
   });
 }

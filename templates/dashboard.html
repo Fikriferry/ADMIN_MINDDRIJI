@@ -6,6 +6,11 @@
 
 {% block content %}
 
+<!-- ── 🟡 PIL KESELAMATAN: LOAD LIBRARY CHART DI PALING ATAS ── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-core.min.js"></script>
+<script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-tag-cloud.min.js"></script>
+
 <!-- ── GREETING BANNER ── -->
 <div class="greeting-banner">
   <div class="greeting-text">
@@ -15,6 +20,25 @@
   <div class="greeting-date">
     <i class="bi bi-calendar3"></i>
     <span id="currentDate"></span>
+  </div>
+</div>
+
+<!-- ── 🟡 BARU: INPUT FILTER TANGGAL (TARUH DI SINI BIAR RAPI) ── -->
+<div class="card my-4 border-0 shadow-sm p-3 bg-white" style="border-radius: 12px;">
+  <div class="row g-3 align-items-center">
+    <div class="col-12 col-md-3">
+      <label class="form-label small text-muted fw-bold mb-1">Tanggal Mulai</label>
+      <input type="date" id="startDate" class="form-control form-control-sm">
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label small text-muted fw-bold mb-1">Tanggal Selesai</label>
+      <input type="date" id="endDate" class="form-control form-control-sm">
+    </div>
+    <div class="col-12 col-md-2 mt-md-4">
+      <button id="btnFilter" class="btn btn-primary btn-sm w-100 fw-bold">
+        <i class="bi bi-filter"></i> Filter Data
+      </button>
+    </div>
   </div>
 </div>
 
@@ -46,7 +70,7 @@
     </div>
   </div>
 
-  <!-- Card: Sesi Aktif (placeholder) -->
+  <!-- Card: Sesi Aktif -->
   <div class="col-12 col-sm-6 col-xl-3">
     <div class="stat-card stat-card--cyan">
       <div class="stat-card__header">
@@ -71,7 +95,7 @@
     </div>
   </div>
 
-  <!-- Card: Insight AI (placeholder) -->
+  <!-- Card: Insight AI -->
   <div class="col-12 col-sm-6 col-xl-3">
     <div class="stat-card stat-card--soft">
       <div class="stat-card__header">
@@ -96,7 +120,7 @@
     </div>
   </div>
 
-  <!-- Card: Artikel (placeholder) -->
+  <!-- Card: Artikel -->
   <div class="col-12 col-sm-6 col-xl-3">
     <div class="stat-card stat-card--soft">
       <div class="stat-card__header">
@@ -107,10 +131,10 @@
           <i class="bi bi-arrow-down-short"></i>-2%
         </span>
       </div>
-      <div class="stat-card__body">
-        <p class="stat-card__label">Artikel Dipublikasi</p>
-        <h3 class="stat-card__value" data-target="64">0</h3>
-        <p class="stat-card__sub">Konten aktif platform</p>
+      <div class="stat-card__body"> 
+        <p class="stat-card__label">Jumlah Artikel</p>
+        <h3 class="stat-card__value" data-target="{{ total_artikel }}">0</h3>
+        <p class="stat-card__sub">Total artikel yang tersimpan</p>
       </div>
       <div class="stat-card__footer">
         <div class="stat-mini-bar">
@@ -126,56 +150,142 @@
 <!-- ── BOTTOM ROW: Chart Area + Activity ── -->
 <div class="row g-4">
 
-  <!-- Chart Placeholder -->
-  <div class="col-12 col-lg-8">
-    <div class="content-card">
-      <div class="content-card__head">
-        <div>
-          <h5 class="content-card__title">Grafik Pertumbuhan Pengguna</h5>
-          <p class="content-card__sub">Tren 6 bulan terakhir</p>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="chip-btn chip-btn--active">Bulan</button>
-          <button class="chip-btn">Minggu</button>
-          <button class="chip-btn">Hari</button>
-        </div>
+<!-- 🟡 AREA GRAFIK SCRAPER — VERSI UPGRADE -->
+<div class="col-12 col-lg-8">
+  <div class="content-card h-100 viz-card">
+    <div class="content-card__head">
+      <div>
+        <h5 class="content-card__title">Analisis Tren Artikel Doomscrolling</h5>
+        <p class="content-card__sub">Data divisualisasikan otomatis dari MongoDB &amp; fully responsive</p>
       </div>
-      <div class="chart-placeholder">
-        <!-- SVG Illustrative Chart -->
-        <svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" class="fake-chart">
-          <defs>
-            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <!-- Grid lines -->
-          <line x1="0" y1="50"  x2="600" y2="50"  stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-          <line x1="0" y1="100" x2="600" y2="100" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-          <line x1="0" y1="150" x2="600" y2="150" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4"/>
-          <!-- Area fill -->
-          <path d="M0,160 C60,140 100,120 160,100 C220,80 260,60 320,70 C380,80 420,50 480,40 C520,33 560,30 600,28 L600,200 L0,200 Z"
-                fill="url(#chartGrad)"/>
-          <!-- Line -->
-          <path d="M0,160 C60,140 100,120 160,100 C220,80 260,60 320,70 C380,80 420,50 480,40 C520,33 560,30 600,28"
-                fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- Dots -->
-          <circle cx="160" cy="100" r="4" fill="#0ea5e9"/>
-          <circle cx="320" cy="70"  r="4" fill="#0ea5e9"/>
-          <circle cx="480" cy="40"  r="4" fill="#0ea5e9"/>
-          <circle cx="600" cy="28"  r="5" fill="#fff" stroke="#0ea5e9" stroke-width="2.5"/>
-        </svg>
-        <div class="chart-labels">
-          <span>Jan</span><span>Feb</span><span>Mar</span>
-          <span>Apr</span><span>Mei</span><span>Jun</span>
+      <span class="badge bg-success px-3 py-2 viz-live-badge">
+        <i class="bi bi-check-circle-fill me-1"></i> Live Connected
+      </span>
+    </div>
+
+    <!-- Ringkasan cepat -->
+    <div class="viz-summary px-3 pt-3">
+      <div class="viz-summary__item">
+        <span class="viz-summary__label"><i class="bi bi-fire"></i> Top Keyword</span>
+        <span class="viz-summary__value" id="topKeywordText">—</span>
+      </div>
+      <div class="viz-summary__divider"></div>
+      <div class="viz-summary__item">
+        <span class="viz-summary__label"><i class="bi bi-graph-up-arrow"></i> Total Frekuensi Top 10 Keyword</span>
+        <span class="viz-summary__value" id="totalOccurrenceText">—</span>
+      </div>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="viz-tabs px-3 pt-3">
+      <button type="button" class="viz-tab-btn active" data-target="wordcloud-container">
+        <i class="bi bi-cloud-text-fill me-1"></i> WordCloud
+      </button>
+      <button type="button" class="viz-tab-btn" data-target="barChartWrapper">
+        <i class="bi bi-bar-chart-fill me-1"></i> 10 Kata Kunci Terbanyak
+      </button>
+    </div>
+
+    <div class="p-3">
+      <div class="viz-panel" id="vizPanel">
+
+        <!-- Skeleton loading -->
+        <div class="viz-skeleton" id="vizSkeleton">
+          <div class="viz-skeleton__bar" style="width:80%"></div>
+          <div class="viz-skeleton__bar" style="width:60%"></div>
+          <div class="viz-skeleton__bar" style="width:70%"></div>
+          <div class="viz-skeleton__bar" style="width:45%"></div>
         </div>
-        <div class="chart-coming-soon">
-          <i class="bi bi-bar-chart-line"></i>
-          <span>Integrasi chart lengkap segera hadir</span>
+
+        <!-- WordCloud -->
+        <div id="wordcloud-container" class="viz-panel__view active" style="width:100%; height:280px; min-height:280px;"></div>
+
+        <!-- Bar Chart -->
+        <div id="barChartWrapper" class="viz-panel__view" style="width:100%; height:280px; position:relative;">
+          <canvas id="barChartCanvas"></canvas>
         </div>
+
       </div>
     </div>
   </div>
+</div>
+
+<style>
+.viz-card{ overflow: visible; }
+
+.viz-live-badge{
+  border-radius: 30px;
+  font-weight: 500;
+  animation: vizPulse 2s infinite;
+}
+@keyframes vizPulse{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(25,135,84,.35); }
+  50%{ box-shadow: 0 0 0 6px rgba(25,135,84,0); }
+}
+
+/* Ringkasan cepat */
+.viz-summary{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%);
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: #fff;
+  margin: 0 12px;
+  box-shadow: 0 8px 20px -8px rgba(99,102,241,.5);
+}
+.viz-summary__item{ display:flex; flex-direction:column; gap:4px; flex:1; }
+.viz-summary__label{ font-size: .75rem; opacity:.85; font-weight:600; letter-spacing:.02em; }
+.viz-summary__value{ font-size: 1.15rem; font-weight:700; }
+.viz-summary__divider{ width:1px; height:34px; background: rgba(255,255,255,.35); }
+
+/* Tabs */
+.viz-tabs{ display:flex; gap:8px; }
+.viz-tab-btn{
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 30px;
+  transition: all .2s ease;
+}
+.viz-tab-btn:hover{ background:#eef2ff; color:#4338ca; }
+.viz-tab-btn.active{
+  background: linear-gradient(135deg,#0ea5e9,#6366f1);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px -4px rgba(99,102,241,.6);
+}
+
+/* Panel */
+.viz-panel{
+  position: relative;
+  border: 1px solid #eef0f4;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+}
+.viz-panel__view{ display:none; }
+.viz-panel__view.active{ display:block; }
+
+/* Skeleton */
+.viz-skeleton{ display:none; flex-direction:column; gap:12px; padding: 20px 4px; }
+.viz-skeleton.show{ display:flex; }
+.viz-skeleton__bar{
+  height: 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg,#eef1f5 25%,#f8fafc 37%,#eef1f5 63%);
+  background-size: 400% 100%;
+  animation: vizShimmer 1.4s ease infinite;
+}
+@keyframes vizShimmer{
+  0%{ background-position: 100% 50%; }
+  100%{ background-position: 0 50%; }
+}
+</style>
 
   <!-- Recent Activity -->
   <div class="col-12 col-lg-4">
@@ -189,7 +299,6 @@
       </div>
 
       <div class="activity-list">
-
         <div class="activity-item">
           <div class="activity-icon activity-icon--blue">
             <i class="bi bi-person-plus"></i>
@@ -244,7 +353,6 @@
           </div>
           <span class="activity-dot dot-blue"></span>
         </div>
-
       </div>
 
       <a href="#" class="view-all-btn">Lihat semua aktivitas <i class="bi bi-arrow-right"></i></a>
@@ -252,5 +360,123 @@
   </div>
 
 </div><!-- /row bottom -->
+
+<!-- ── 🟡 SCRIPT KONTROL LOGIC NYA DI SINI ── -->
+<script>
+let myBarChart = null;
+let myWordCloud = null;
+
+function setLoading(isLoading) {
+    const skeleton = document.getElementById('vizSkeleton');
+    const panel = document.getElementById('vizPanel');
+    if (isLoading) {
+        skeleton.classList.add('show');
+        panel.style.opacity = '0.35';
+    } else {
+        skeleton.classList.remove('show');
+        panel.style.opacity = '1';
+    }
+}
+
+function loadDashboardCharts(startDate = '', endDate = '') {
+    let url = '/api/chart-data';
+    if (startDate && endDate) {
+        url += `?start_date=${startDate}&end_date=${endDate}`;
+    }
+
+    setLoading(true);
+
+    fetch(url)
+        .then(response => response.json())
+        .then(res => {
+            setLoading(false);
+
+            if (!res.success) {
+                console.error("Gagal memuat data dari MongoDB:", res.message);
+                return;
+            }
+
+            // === RINGKASAN: Top Keyword & Total Kemunculan ===
+            const labels = res.bar_chart.labels || [];
+            const values = res.bar_chart.values || [];
+            const topIndex = values.indexOf(Math.max(...values));
+            document.getElementById('topKeywordText').textContent =
+                labels.length ? labels[topIndex] : '—';
+            document.getElementById('totalOccurrenceText').textContent =
+                values.length ? values.reduce((a, b) => a + b, 0).toLocaleString('id-ID') : '—';
+
+            // === 1. UPDATE CHART.JS (BAR CHART) ===
+            const ctx = document.getElementById('barChartCanvas').getContext('2d');
+            if (myBarChart) { myBarChart.destroy(); }
+
+            myBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Muncul (kali)',
+                        data: values,
+                        backgroundColor: (ctxBg) => {
+                            const g = ctxBg.chart.ctx.createLinearGradient(0, 0, 300, 0);
+                            g.addColorStop(0, '#0ea5e9');
+                            g.addColorStop(1, '#6366f1');
+                            return g;
+                        },
+                        borderRadius: 8,
+                        barThickness: 16
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#f1f5f9' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // === 2. UPDATE ANYCHART (WORDCLOUD) ===
+            document.getElementById('wordcloud-container').innerHTML = '';
+            myWordCloud = anychart.tagCloud(res.wordcloud);
+            myWordCloud.angles([0]);
+            myWordCloud.colorRange(true);
+            myWordCloud.container('wordcloud-container');
+            myWordCloud.draw();
+        })
+        .catch(err => {
+            setLoading(false);
+            console.error("Koneksi API bermasalah:", err);
+        });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    loadDashboardCharts();
+
+    document.getElementById('btnFilter').addEventListener('click', function() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        loadDashboardCharts(start, end);
+    });
+
+    // Tab switcher
+    const tabButtons = document.querySelectorAll('.viz-tab-btn');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            document.querySelectorAll('.viz-panel__view').forEach(v => v.classList.remove('active'));
+            document.getElementById(this.dataset.target).classList.add('active');
+
+            // Redraw agar canvas/wordcloud tidak blank saat berpindah tab
+            if (this.dataset.target === 'barChartWrapper' && myBarChart) myBarChart.resize();
+            if (this.dataset.target === 'wordcloud-container' && myWordCloud) myWordCloud.draw();
+        });
+    });
+});
+</script>
 
 {% endblock %}
