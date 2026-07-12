@@ -486,14 +486,10 @@ def update_profile():
         if not email or not password_konfirmasi:
             return jsonify({"status": "error", "message": "Email dan password konfirmasi wajib diisi!"}), 400
 
-        user_query = supabase.table('profiles').select('*').eq('email', email).execute()
-        
-        if not user_query.data:
-            return jsonify({"status": "error", "message": "User tidak ditemukan!"}), 404
-
-        user_data = user_query.data[0]
-
-        if not check_password_hash(user_data['password'], password_konfirmasi):
+        # Verifikasi password via Supabase Auth, bukan check_password_hash manual
+        try:
+            supabase.auth.sign_in_with_password({"email": email, "password": password_konfirmasi})
+        except Exception:
             return jsonify({"status": "error", "message": "Konfirmasi password salah! Gagal memperbarui data."}), 401
 
         update_data = {
@@ -507,9 +503,6 @@ def update_profile():
 
         if update_query.data:
             updated_user = update_query.data[0]
-            if 'password' in updated_user:
-                del updated_user['password']
-
             return jsonify({
                 "status": "success",
                 "message": "Profil berhasil diperbarui.",
